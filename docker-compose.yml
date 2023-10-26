@@ -1,0 +1,35 @@
+version: "1.0"
+
+services:
+    # install sdk and run emulator
+    ubuntu-android:
+        build:
+            context: .
+            dockerfile: dockerfile_sdk
+            args:
+                - AVD_NAME=$AVD_NAME
+        image: ubuntu-android-sdk-image
+        container_name: ubuntu-android-sdk-container
+        volumes:
+            # - /opt/docker/android/sdk/:/root/android/sdk/
+            # - /opt/docker/android/root/.android/:/root/.android/
+            - "$HOME/.Xauthority:/root/.Xauthority:ro"
+        devices:
+            - "/dev/kvm:/dev/kvm"
+        environment:
+            - "DISPLAY=$DISPLAY"
+        network_mode: "host"
+        command: emulator -avd $AVD_NAME
+
+    # install and run appium server
+    # appium:
+    #     image: ubuntu-android-sdk-image
+    #     container_name: appium_container
+    #     links:
+    #         - ubuntu-android
+    #     depends_on:
+    #         - ubuntu-android
+    #     volumes:
+    #         - /opt/docker/android/sdk/:/root/android/sdk/
+    #         - /opt/docker/android/root/.android/:/root/.android/
+
