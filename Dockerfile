@@ -63,6 +63,53 @@ RUN echo "Ubuntu base container is Build!"
 #  --network host --name a-container --device /dev/kvm  b /bin/bash
 
 
-# not help
-# install libxcb-cursor0
+# Replace shell with bash so we can source files
+# RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+
+# Set debconf to run non-interactively
+# RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
+
+
+# ENV NVM_DIR /root/.nvm
+# ENV NODE_VERSION 16.13.0
+
+# # Install nvm with node and npm
+# RUN curl -sL https://raw.githubusercontent.com/creationix/nvm/v0.35.3/install.sh | bash \
+#   && . $NVM_DIR/nvm.sh \ 
+#   && nvm install $NODE_VERSION
+
+
+# replace shell with bash so we can source files
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+
+# nvm environment variables
+ENV NVM_DIR /root/nvm
+ENV NODE_VERSION 16.13.0
+
+RUN mkdir -p $NVM_DIR
+
+# install nvm
+# https://github.com/creationix/nvm#install-script
+RUN curl --silent -o- https://raw.githubusercontent.com/creationix/nvm/v0.35.3/install.sh | bash
+
+ENV NODE_PATH $NVM_DIR/v$NODE_VERSION/lib/node_modules
+ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+
+RUN echo "source $NVM_DIR/nvm.sh && \
+    nvm install $NODE_VERSION && \
+    nvm alias default $NODE_VERSION && \
+    nvm use default" | bash
+
+# confirm installation
+RUN node -v
+RUN npm -v
+
+
+
+# appium 2.0.1
+# RUN npm i -g appium
+
+# RUN appium driver install uiautomator2
+# RUN npm i -g appium-doctor
+
 
