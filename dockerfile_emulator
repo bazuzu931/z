@@ -1,0 +1,156 @@
+FROM  --platform=linux/amd64 openjdk:17-slim
+ARG AVD_NAME
+ENV AVD_NAME ${AVD_NAME}
+ENV ANDROID_SDK_TOOLS 9477386
+ENV ANDROID_SDK_URL https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_SDK_TOOLS}_latest.zip
+ENV ANDROID_BUILD_TOOLS_VERSION 33.0.0
+ENV ANDROID_HOME /root/android/sdk
+ENV ANDROID_VERSION 33
+ENV QT_DEBUG_PLUGINS=1
+ENV PATH $PATH:$ANDROID_HOME/tools:$ANDROID_HOME/tools/bin:$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/emulator
+
+# Set user to root for necessary permissions
+USER root
+
+# Install required packages
+RUN apt-get update && \
+    apt-get install -y vim libqt5gui5 procps libxcb-cursor0 pulseaudio libnss3-dev libgdk-pixbuf2.0-dev libgtk-3-dev libxss-dev \
+        unzip bzip2 libdrm-dev libxkbcommon-dev libgbm-dev libasound-dev libnss3 libxcursor1 libpulse-dev  \
+        libxshmfence-dev xauth xvfb x11vnc fluxbox wmctrl libdbus-glib-1-2 && \
+    apt-get install -y --no-install-recommends unzip curl && \
+    mkdir -p "$ANDROID_HOME" .android && \
+    cd "$ANDROID_HOME" && \
+    curl -o sdk.zip $ANDROID_SDK_URL && \
+    unzip sdk.zip && \
+    rm sdk.zip && \
+# Download Android SDK
+    yes | sdkmanager --licenses --sdk_root=$ANDROID_HOME && \
+    sdkmanager --update --sdk_root=$ANDROID_HOME && \
+    sdkmanager --sdk_root=$ANDROID_HOME "build-tools;${ANDROID_BUILD_TOOLS_VERSION}" \
+    "platforms;android-${ANDROID_VERSION}" \
+    "platform-tools" \
+    "emulator" \
+    "extras;android;m2repository" \
+    "extras;google;m2repository" && \
+# Clean up
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+    apt-get autoremove -y && \
+    apt-get clean
+
+RUN sdkmanager --sdk_root=$ANDROID_HOME --install "system-images;android-33;google_apis_playstore;x86_64"
+
+RUN echo "no" | avdmanager  create avd  --name $AVD_NAME --package "system-images;android-33;google_apis_playstore;x86_64" 
+
+RUN sed -i -e 's/sysdir.1=sdk\//sysdir.1=/g' /root/.android/avd/$AVD_NAME.avd/config.ini
+
+# -no-window Parameters must to add!
+# RUN emulator -avd $AVD_NAME -gpu swiftshader_indirect -no-audio -no-boot-anim 
+
+# docker run -it --rm -e "DISPLAY=$DISPLAY"  -v "$HOME/.Xauthority:/root/.Xauthority:ro"  \
+#  --network host --name a-container --device /dev/kvm  b /bin/bash
+
+RUN echo "Ubuntu base container is Build!"
+
+# WORKDIR /app
+
+# RUN echo '---------------------- RECONNECT ADB -------------------------'
+# RUN bash -c 'adb kill-server '
+# RUN bash -c 'adb start-server '
+# RUN bash -c 'adb reconnect '
+# RUN adb connect 127.0.0.1:5037
+
+# EXPOSE 5037
+
+
+
+# # Install and Run Appium
+
+# ENV APPIUM_VERSION=2.0.1
+
+# RUN set -uex; \
+#     apt-get update; \
+#     apt-get install -y ca-certificates curl gnupg; \
+#     mkdir -p /etc/apt/keyrings; \
+#     curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+#      | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg; \
+#     NODE_MAJOR=16; \
+#     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" \
+#      > /etc/apt/sources.list.d/nodesource.list; \
+#     apt-get update; \
+#     apt-get install nodejs -y && \
+#     npm install -g appium@${APPIUM_VERSION} --unsafe-perm=true --allow-root && \
+#     appium driver install uiautomator2 && \
+#     npm install -g appium-doctor --unsafe-perm=true --allow-root && \
+#     exit 0 && \
+#     npm cache clean && \
+#     apt-get remove --purge -y npm && \
+#     apt-get autoremove --purge -y && \
+#     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+#     apt-get clean
+
+# ENV TZ="Europe/Baku"
+# RUN echo "${TZ}" > /etc/timezone
+
+
+
+
+
+
+
+
+# RUN apt-get install -y python3 python3-pip && pip install rich selenium pyperclip
+
+# RUN pip install  appium-python-client
+# RUN pip install  Pillow
+
+# WORKDIR /app
+# COPY ./app/ .
+
+
+# # RUN sh -c 'appium -p 4723 &'
+# RUN sh -c 'appium -p 4723 --log-level error  --session-override   &'
+
+# EXPOSE 4723
+
+
+# Install and Run Appium
+
+ENV APPIUM_VERSION=2.0.1
+
+RUN set -uex; \
+    apt-get update; \
+    apt-get install -y ca-certificates curl gnupg; \
+    mkdir -p /etc/apt/keyrings; \
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+     | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg; \
+    NODE_MAJOR=16; \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" \
+     > /etc/apt/sources.list.d/nodesource.list; \
+    apt-get update; \
+    apt-get install nodejs -y && \
+    npm install -g appium@${APPIUM_VERSION} --unsafe-perm=true --allow-root && \
+    appium driver install uiautomator2 && \
+    npm install -g appium-doctor --unsafe-perm=true --allow-root && \
+    exit 0 && \
+    npm cache clean && \
+    apt-get remove --purge -y npm && \
+    apt-get autoremove --purge -y && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+    apt-get clean
+
+ENV TZ="Europe/Baku"
+RUN echo "${TZ}" > /etc/timezone
+
+RUN apt-get install -y python3 python3-pip && pip install rich selenium pyperclip appium-python-client Pillow
+
+WORKDIR /app
+COPY ./app/ .
+COPY ./script.sh .
+
+RUN chmod +x ./script.sh
+
+# RUN bash -c 'appium'
+# RUN bash -c 'sleep 5 && appium  --log-level error  --session-override   &'
+# RUN bash -c 'appium -p 4723 -a localhost -pa &'
+
+# EXPOSE 4723

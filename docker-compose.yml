@@ -1,33 +1,48 @@
 version: "1.0"
 
 services:
-    # install sdk and run emulator
-    ubuntu-android:
+    # install sdk and run emulator + install and run appium
+    emulator:
         build:
             context: .
-            dockerfile: Dockerfile
+            dockerfile: dockerfile_emulator
             args:
                 - AVD_NAME=$AVD_NAME
         image: ubuntu-android-sdk-image
-        container_name: ubuntu-android-sdk-container
+        container_name: emulator-container
         volumes:
             - "$HOME/.Xauthority:/root/.Xauthority:ro"
-            # - /opt/docker/android/sdk/:/root/android/sdk/
-            # - /opt/docker/android/root/.android/:/root/.android/
         devices:
             - "/dev/kvm:/dev/kvm"
+        network_mode: "host"
+        # ports:
+        #     - 5037:5037
+        # privileged: true
         environment:
             - "DISPLAY=$DISPLAY"
-        network_mode: "host"
-        # command: emulator -avd $AVD_NAME
-        command: node -v
+        # command: emulator -avd ${AVD_NAME} -no-boot-anim -gpu swiftshader_indirect -no-audio
+        # command: sh -c "./start.sh"
+        command: ["bash", "-c", "./script.sh"]
 
+    # appium:
+    #     build:
+    #         context: .
+    #         dockerfile: dockerfile_appium
+    #     image: appium-image
+    #     container_name: appium-container
+    #     network_mode: "host"
+    #     ports:
+    #         - 5037:5037
+    #     depends_on:
+    #         - emulator
+    #     # command: sleep 5 && appium -p 4723 --log-level error  --session-override
+    #     command: python3 main.py
 
-    # install and run appium server
-    appium:
-        image: ubuntu-android-sdk-image
-        container_name: appium_container
-        links:
-            - ubuntu-android
-        depends_on:
-            - ubuntu-android
+    # script:
+    #     image: ubuntu-android-sdk-image
+    #     container_name: appium-script-container
+    #     depends_on:
+    #         - appium
+    #     links:
+    #         - appium
+    #     command: python3 main.py
